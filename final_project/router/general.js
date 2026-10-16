@@ -59,18 +59,41 @@ public_users.get('/review/:isbn',function (req, res) {
 // Node client without duplicating request logic.
 const apiBaseUrl = process.env.BOOK_REVIEWS_API_URL || "http://localhost:5000";
 
-const getAllBooks = () => axios.get(apiBaseUrl).then((response) => response.data);
-const getBookByISBN = (isbn) =>
-  axios.get(`${apiBaseUrl}/isbn/${encodeURIComponent(isbn)}`).then((response) => response.data);
-
-const getBooksByAuthor = async (author) => {
-  const response = await axios.get(`${apiBaseUrl}/author/${encodeURIComponent(author)}`);
-  return response.data;
+// Keep request failures actionable for callers while preserving Axios details.
+const handleRequestError = (operation, error) => {
+  const failure = new Error(`${operation} failed: ${error.message}`);
+  failure.cause = error;
+  throw failure;
 };
 
+// Retrieve the complete catalog using a Promise callback.
+const getAllBooks = () => axios.get(apiBaseUrl, { timeout: 10000 })
+  .then((response) => response.data)
+  .catch((error) => handleRequestError('Get all books', error));
+// Retrieve one ISBN, encoding the value before building the URL.
+const getBookByISBN = (isbn) =>
+  axios.get(`${apiBaseUrl}/isbn/${encodeURIComponent(isbn)}`, { timeout: 10000 })
+    .then((response) => response.data)
+    .catch((error) => handleRequestError('Get book by ISBN', error));
+
+// Retrieve author matches with async/await and propagate request failures.
+const getBooksByAuthor = async (author) => {
+  try {
+    const response = await axios.get(`${apiBaseUrl}/author/${encodeURIComponent(author)}`, { timeout: 10000 });
+    return response.data;
+  } catch (error) {
+    return handleRequestError('Get books by author', error);
+  }
+};
+
+// Retrieve title matches with async/await and propagate request failures.
 const getBooksByTitle = async (title) => {
-  const response = await axios.get(`${apiBaseUrl}/title/${encodeURIComponent(title)}`);
-  return response.data;
+  try {
+    const response = await axios.get(`${apiBaseUrl}/title/${encodeURIComponent(title)}`, { timeout: 10000 });
+    return response.data;
+  } catch (error) {
+    return handleRequestError('Get books by title', error);
+  }
 };
 
 module.exports.general = public_users;

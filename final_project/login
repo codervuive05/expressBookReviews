@@ -1,3 +1,7 @@
-curl.exe -sS -c curl-cookie.txt -X POST http://localhost:5000/customer/login -H "Content-Type: application/json" --data-raw '{"username":"coursera_student_20260920","password":"CoursePass2026"}'
+curl.exe -sS -X POST http://localhost:5000/login -H "Content-Type: application/json" --data-raw '{"username":"coursera_student_20261016","password":"<INCORRECT_TEST_PASSWORD>"}'
 
-{"message":"User successfully logged in","accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNvdXJzZXJhX3N0dWRlbnRfMjAyNjA5MjAiLCJpYXQiOjE3ODk4NDg5OTEsImV4cCI6MTc4OTg1MjU5MX0.YiN7IxHTXUBfK8Ls_UFY39brojQa82jK8ORIb3Vawk0"}
+{"message":"Invalid login. Check username and password."}
+
+curl.exe -sS -c cookie.txt -X POST http://localhost:5000/login -H "Content-Type: application/json" --data-raw '{"username":"coursera_student_20261016","password":"<LOCAL_TEST_PASSWORD>"}'
+
+{"message":"Login successful!","accessToken":"<REDACTED_LOCAL_TOKEN>"}

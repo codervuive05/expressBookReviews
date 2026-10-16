@@ -1,3 +1,3 @@
-curl.exe -sS -b curl-cookie.txt -X PUT "http://localhost:5000/customer/auth/review/1?review=Excellent%20classic"
+curl.exe -sS -b cookie.txt -X PUT "http://localhost:5000/customer/auth/review/1?review=Excellent%20classic"
 
-{"message":"Review added or updated successfully","reviews":{"coursera_student_20260920":"Excellent classic"}}
+{"message":"Review added or updated successfully","reviews":{"coursera_student_20261016":"Excellent classic"}}

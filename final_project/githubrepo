@@ -1,12 +1,3 @@
-curl.exe -sS https://api.github.com/repos/DungVVN/expressBookReviews
+curl.exe -sS -L https://api.github.com/repos/codervuive05/expressBookReviews | jq '.parent.full_name'
 
-{
-  "full_name": "DungVVN/expressBookReviews",
-  "private": false,
-  "fork": true,
-  "parent": {
-    "full_name": "ibm-developer-skills-network/expressBookReviews",
-    "html_url": "https://github.com/ibm-developer-skills-network/expressBookReviews",
-    "fork": false
-  }
-}
+"ibm-developer-skills-network/expressBookReviews"
