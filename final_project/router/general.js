@@ -20,6 +20,9 @@ public_users.post("/register", (req,res) => {
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
+  if (Object.keys(books).length === 0) {
+    return res.status(404).json({ message: 'No books found' });
+  }
   return res.status(200).json(books);
 });
 
@@ -36,6 +39,9 @@ public_users.get('/author/:author',function (req, res) {
   const matches = Object.fromEntries(Object.entries(books).filter(([, book]) =>
     book.author.toLocaleLowerCase().includes(author)
   ));
+  if (Object.keys(matches).length === 0) {
+    return res.status(404).json({ message: 'No books found for this author' });
+  }
   return res.status(200).json(matches);
 });
 
@@ -45,6 +51,9 @@ public_users.get('/title/:title',function (req, res) {
   const matches = Object.fromEntries(Object.entries(books).filter(([, book]) =>
     book.title.toLocaleLowerCase().includes(title)
   ));
+  if (Object.keys(matches).length === 0) {
+    return res.status(404).json({ message: 'No books found for this title' });
+  }
   return res.status(200).json(matches);
 });
 
@@ -66,21 +75,38 @@ const handleRequestError = (operation, error) => {
   throw failure;
 };
 
+// Inspect HTTP status explicitly: success, not found, and other server errors.
+// validateStatus lets every HTTP response reach this shared handler; network
+// failures still reject and are propagated by each helper's catch block.
+const requestOptions = { timeout: 10000, validateStatus: () => true };
+const readBookResponse = (response) => {
+  if (response.status === 200) {
+    if (!response.data || Object.keys(response.data).length === 0) {
+      throw new Error('No books found (empty response)');
+    }
+    return response.data;
+  }
+  if (response.status === 404) {
+    throw new Error(`Books not found (HTTP 404): ${response.data.message || 'No matching books'}`);
+  }
+  throw new Error(`Book request returned HTTP ${response.status}: ${response.data.message || 'Unexpected server response'}`);
+};
+
 // Retrieve the complete catalog using a Promise callback.
-const getAllBooks = () => axios.get(apiBaseUrl, { timeout: 10000 })
-  .then((response) => response.data)
+const getAllBooks = () => axios.get(apiBaseUrl, requestOptions)
+  .then(readBookResponse)
   .catch((error) => handleRequestError('Get all books', error));
 // Retrieve one ISBN, encoding the value before building the URL.
 const getBookByISBN = (isbn) =>
-  axios.get(`${apiBaseUrl}/isbn/${encodeURIComponent(isbn)}`, { timeout: 10000 })
-    .then((response) => response.data)
+  axios.get(`${apiBaseUrl}/isbn/${encodeURIComponent(isbn)}`, requestOptions)
+    .then(readBookResponse)
     .catch((error) => handleRequestError('Get book by ISBN', error));
 
 // Retrieve author matches with async/await and propagate request failures.
 const getBooksByAuthor = async (author) => {
   try {
-    const response = await axios.get(`${apiBaseUrl}/author/${encodeURIComponent(author)}`, { timeout: 10000 });
-    return response.data;
+    const response = await axios.get(`${apiBaseUrl}/author/${encodeURIComponent(author)}`, requestOptions);
+    return readBookResponse(response);
   } catch (error) {
     return handleRequestError('Get books by author', error);
   }
@@ -89,8 +115,8 @@ const getBooksByAuthor = async (author) => {
 // Retrieve title matches with async/await and propagate request failures.
 const getBooksByTitle = async (title) => {
   try {
-    const response = await axios.get(`${apiBaseUrl}/title/${encodeURIComponent(title)}`, { timeout: 10000 });
-    return response.data;
+    const response = await axios.get(`${apiBaseUrl}/title/${encodeURIComponent(title)}`, requestOptions);
+    return readBookResponse(response);
   } catch (error) {
     return handleRequestError('Get books by title', error);
   }
